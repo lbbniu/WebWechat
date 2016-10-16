@@ -119,7 +119,7 @@ class WebWeiXin{
 	}
 
 	public function genQRCode(){
-        if(strpos(PHP_OS, 'win')!==false){
+        if(false&&strpos(PHP_OS, 'win')!==false){
             $this->_showQRCodeImg();
         }else{
             $this->_str2qr('https://login.weixin.qq.com/l/' . $this->uuid);
