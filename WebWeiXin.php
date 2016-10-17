@@ -2,6 +2,7 @@
 <?php
 require_once 'QRcode.class.php';
 function raw_input($str){
+   echo("监听输入：");
    fwrite(STDOUT,$str);
    return trim(fgets(STDIN));
 }
@@ -337,7 +338,7 @@ class WebWeiXin{
             $retcode = $pm[1];
             $selector = $pm[2];
         }else{
-            var_dump($data);
+            //var_dump($data);
             $retcode = -1;
             $selector = -1;
         }
@@ -495,14 +496,21 @@ class WebWeiXin{
         $fn = $filename;
         if (isset($this->saveSubFolders[$api])){
             $dirName = $this->saveFolder.$this->saveSubFolders[$api];
+            umask(0);
             if(!is_dir($dirName)){
-                mkdir($dirName,'0777',true);
+                mkdir($dirName,0777,true);
+                chmod($dirName, 0777);
             }
             $fn = $dirName.'/'. $filename;
             $this->_echo(sprintf('Saved file: %s' , $fn));
+            //file_put_contents($fn, $data);
             $f = fopen($fn, 'wb');
-            fwrite($f,$data);
-            fclose($f);
+            if($f){
+                fwrite($f,$data);
+                fclose($f);
+            }else{
+                $this->_echo('[*] 保存失败 - '.$fn);
+            }
         }
         return $fn;
     }
@@ -690,6 +698,10 @@ class WebWeiXin{
             $content = str_replace(['&lt;','&gt;'], ['<','>'], $msg['Content']);
             $msgid = $msg['MsgId'];
             if ($this->DEBUG||true){
+                if(!is_dir('msg')){
+                    umask(0);
+                    mkdir('msg',0777,true);
+                }
                 $fn = 'msg/msg' .$msgid. '.json';
                 $f = fopen($fn, 'w');
                 fwrite($f,json_encode($msg,JSON_UNESCAPED_UNICODE));
@@ -702,6 +714,14 @@ class WebWeiXin{
                 $this->_showMsg($raw_msg);
                 //lbbniu 重要
                 if ($this->autoReplyMode){
+                    if(substr($msg['FromUserName'],0,2) == '@@' && stripos($content, ":<br/>")!==false){
+                        list($people, $content) = explode(':<br/>', $content);
+                    }
+                    //自己发的消息不自动回复
+                    if($msg['FromUserName'] == $this->User['UserName']){
+                        $this->_echo('[*] 自己发的消息不自动回复');
+                        continue;
+                    }
                     $ans = $this->_weida($content) . "\n[IT全才-LbbNiu]";
                     if ($this->webwxsendmsg($ans, $msg['FromUserName'])){
                         $this->_echo( '自动回复: ' . $ans);
@@ -768,7 +788,7 @@ class WebWeiXin{
                            'message'=> sprintf('%s 发了一段小视频: %s' , $name, $video)];
                 $this->_showMsg($raw_msg);
                 $this->_safe_open($video);
-            }elseif ($msgType == 10002){
+            }elseif ($msgType == 10002){//撤销消息
                 $raw_msg = ['raw_msg'=> $msg, 'message'=> sprintf('%s 撤回了一条消息' , $name)];
                 $this->_showMsg($raw_msg);
             }else{
@@ -945,22 +965,30 @@ class WebWeiXin{
         	$this->autoReplyMode = true;
             $this->_echo('[*] 自动回复模式 ... 开启');
         } else{
-        	$this->_echo('[*] 自动回复模式 ... 关闭');
+            if($this->autoReplyMode)
+                $this->_echo('[*] 自动回复模式 ... 开启');
+            else
+        	    $this->_echo('[*] 自动回复模式 ... 关闭');
         }
+
         $pf = pcntl_fork();
-        var_dump($pf);
-        if ($pf != 0){
+        if ($pf){ //父进程负责监听消息
             $this->listenMsgMode();
+            exit();
         }
         
         sleep(2);
-        $this->_echo("监听输入：");
+        $this->help();
         while(true){
             $text = raw_input('');
             if($text == 'quit'){
                 //listenProcess.terminate()
           		$this->_echo('[*] 退出微信');
                 exit();
+            }elseif($text == 'help'){
+                $this->help();
+            }elseif($text == 'me'){
+                $this->_echo($this->User);
             }elseif( substr($text, 0,2) == '->'){
                 list($name, $word) = explode(':',substr($text,2));
                 if ($name == 'all')
@@ -983,22 +1011,42 @@ class WebWeiXin{
             }
 		}    
 	}
+    public function help(){
+        $help = '
+==============================================================
+============================================================== 
+->[昵称或ID]:[内容] 给好友发送消息
+m->[昵称或ID]:[文件路径] 给好友发送文件中的内容
+f->[昵称或ID]:[文件路径] 给好友发送文件
+i->[昵称或ID]:[图片路径] 给好友发送图片
+e->[昵称或ID]:[文件路径] 给好友发送表情(jpg/gif)
+quit 退出程序
+help 帮助
+me 查看自己的信息
+==============================================================
+==============================================================
+';
+        $this->_echo($help);
+    }
+
     public function init(){
         if(file_exists("key.key")){
             $array = json_decode(file_get_contents("key.key"),true);
-            $this->skey = $array['skey'];
-            $this->sid = $array['sid'];
-            $this->uin = $array['uin'];
-            $this->pass_ticket = $array['pass_ticket'];
-            $this->deviceId = $array['deviceId'];
+            if($array){
+                $this->skey = $array['skey'];
+                $this->sid = $array['sid'];
+                $this->uin = $array['uin'];
+                $this->pass_ticket = $array['pass_ticket'];
+                $this->deviceId = $array['deviceId'];
 
-            $this->BaseRequest = [
-                'Uin'=> intval($this->uin),
-                'Sid'=> $this->sid,
-                'Skey'=> $this->skey,
-                'DeviceID'=> $this->deviceId
-            ];
-            return true;
+                $this->BaseRequest = [
+                    'Uin'=> intval($this->uin),
+                    'Sid'=> $this->sid,
+                    'Skey'=> $this->skey,
+                    'DeviceID'=> $this->deviceId
+                ];
+                return true;
+            }
         }
         return false;
     }
@@ -1027,18 +1075,24 @@ class WebWeiXin{
 			$this->_echo('成功');
             return true;
 		}else{
-            if($func == 'webwxinit')
+            if($func == 'webwxinit'){
+                $this->_echo("失败\n");
                 return false;
+            }
 			$this->_echo("失败\n[*] 退出程序");
 			exit();
 		}
 	}
 
-	public function _echo($str){
-        if(is_string($str)){
-            echo $str."\n";
+	public function _echo($data){
+        if(is_string($data)){
+            echo $data."\n";
+        }elseif(is_array($data)){
+            print_r($data);
+        }elseif(is_object($data)){
+            var_dump($data);
         }else{
-            var_dump($str);
+            echo $data;
         }
 	}
     public function _printQR($mat){
@@ -1107,7 +1161,7 @@ class WebWeiXin{
         }
         curl_setopt($oCurl, CURLOPT_URL, $url);
 		curl_setopt($oCurl, CURLOPT_RETURNTRANSFER, 1 );
-		curl_setopt($oCurl, CURLOPT_TIMEOUT, 30);
+		curl_setopt($oCurl, CURLOPT_TIMEOUT, 36);
 		curl_setopt($oCurl, CURLOPT_COOKIEFILE, $this->cookie);
 		curl_setopt($oCurl, CURLOPT_COOKIEJAR, $this->cookie);
 		$sContent = curl_exec($oCurl);
@@ -1310,7 +1364,8 @@ class WebWeiXin{
 $weixin = new WebWeiXin();
 //var_dump($weixin);
 $weixin->loadConfig([
-    'interactive'=>true,
+    //'interactive'=>true,
+    'autoReplyMode'=>true,
     //'DEBUG'=>true
 ]);
 $weixin->start();
