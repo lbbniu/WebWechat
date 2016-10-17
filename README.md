@@ -3,5 +3,5 @@
 依赖扩展
 ---
 -> curl
--> pcntl
+-> pcntl 或者 pthreads
 -> gd

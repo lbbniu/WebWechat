@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 <?php
 require_once 'QRcode.class.php';
+
 function raw_input($str){
-   echo("监听输入：");
    fwrite(STDOUT,$str);
    return trim(fgets(STDIN));
 }
@@ -970,20 +970,32 @@ class WebWeiXin{
             else
         	    $this->_echo('[*] 自动回复模式 ... 关闭');
         }
-
-        $pf = pcntl_fork();
-        if ($pf){ //父进程负责监听消息
+        if(extension_loaded("pcntl")){
+            $pf = pcntl_fork();
+            if ($pf){ //父进程负责监听消息
+                $this->listenMsgMode();
+                exit();
+            }
+        }elseif(extension_loaded("pthreads")){
+            return true;
+        }else{
+            $this->_echo('[*] 缺少扩展，暂时只能获取监听消息，不能发送消息');
+            $this->_echo('[*] 如果要发消息，请安装pcntl或者pthreads扩展');
             $this->listenMsgMode();
-            exit();
         }
-        
+    
         sleep(2);
+        $this->readRun();
+        return false;
+	}
+
+    public function readRun(){
         $this->help();
         while(true){
             $text = raw_input('');
             if($text == 'quit'){
                 //listenProcess.terminate()
-          		$this->_echo('[*] 退出微信');
+                $this->_echo('[*] 退出微信');
                 exit();
             }elseif($text == 'help'){
                 $this->help();
@@ -1009,8 +1021,9 @@ class WebWeiXin{
                 list($name, $file_name) = explode(':',substr($text,3));
                 $this->sendEmotion($name, $file_name);
             }
-		}    
-	}
+        }    
+    }
+
     public function help(){
         $help = '
 ==============================================================
@@ -1362,6 +1375,43 @@ me 查看自己的信息
         return $response;
     }
 }
+if(!extension_loaded('pthreads')){
+    class Thread {
+        public function start(){
+
+        }
+    }
+}
+class ListenMsg extends Thread {
+    private $weixin;
+    public function __construct(WebWeiXin $weixin){
+        # code...
+        $this->weixin = $weixin;
+    }
+    public function run(){
+        if($this->weixin){
+            $this->weixin->_echo("[*] 进入消息监听模式 ......ListenMsg...run");
+            $this->weixin->listenMsgMode();
+       }
+    }
+}
+class ListenWrite extends Thread {
+    public function __construct(WebWeiXin $weixin){
+        $this->weixin = $weixin;
+    }
+    public function run(){
+       if($this->weixin){
+            if(!defined('STDIN'))  define('STDIN',  fopen('php://stdin',  'r'));
+            if(!defined('STDOUT')) define('STDOUT', fopen('php://stdout', 'w'));
+            if(!defined('STDERR')) define('STDERR', fopen('php://stderr', 'w'));
+            $this->weixin->_echo("[*] 进入命令行等待输入模式 ......ListenWrite...run");
+            $this->weixin->readRun();
+       }
+    }
+}
+
+
+
 
 $weixin = new WebWeiXin();
 //var_dump($weixin);
@@ -1370,9 +1420,13 @@ $weixin->loadConfig([
     'autoReplyMode'=>true,
     //'DEBUG'=>true
 ]);
-$weixin->start();
-
-// var_dump($weixin->_xiaodoubi("你好"));
+if($weixin->start()){
+    $msg  = new ListenMsg($weixin);
+    $write = new ListenWrite($weixin);
+    $msg->start();
+    sleep(2);
+    $write->start();
+}
 
 
 
