@@ -120,7 +120,7 @@ class WebWeiXin{
 	}
 
 	public function genQRCode(){
-        if(false&&strpos(PHP_OS, 'win')!==false){
+        if(PHP_OS !='Darwin'&&strpos(PHP_OS, 'win')!==false){
             $this->_showQRCodeImg();
         }else{
             $this->_str2qr('https://login.weixin.qq.com/l/' . $this->uuid);
@@ -137,7 +137,7 @@ class WebWeiXin{
         $QRCODE_PATH = $this->_saveFile('qrcode.jpg', $data, '_showQRCodeImg');
         //os.startfile(QRCODE_PATH)
         //TODO:没有完成
-
+        system($QRCODE_PATH);
     }
 
     public function waitForLogin($tip=1){
@@ -1064,8 +1064,10 @@ me 查看自己的信息
         if ($this->autoOpen){
             if(PHP_OS == "Linux"){
                 system(sprintf("xdg-open %s &" , $path));
-            }else{
+            }elseif(PHP_OS == "Darwin"){
                 system(sprintf('open %s &' , $path));
+            }else{
+                system($path);
             }
         }
     }
@@ -1127,7 +1129,7 @@ me 查看自己的信息
         if (gettype($data) == 'unicode'){
             $result = $data;
         }elseif(gettype($data) == 'string'){
-            $result = $data;//.decode('utf-8');
+            $result = $data;
         }
         return $result;
     }
