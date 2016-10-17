@@ -716,6 +716,7 @@ class WebWeiXin{
                 if ($this->autoReplyMode){
                     if(substr($msg['FromUserName'],0,2) == '@@' && stripos($content, ":<br/>")!==false){
                         list($people, $content) = explode(':<br/>', $content);
+                        continue;
                     }
                     //自己发的消息不自动回复
                     if($msg['FromUserName'] == $this->User['UserName']){
@@ -723,6 +724,10 @@ class WebWeiXin{
                         continue;
                     }
                     $ans = $this->_weida($content) . "\n[IT全才-LbbNiu]";
+                    if(!$ans)
+                        $ans = $this->qingyunke($content);
+                    if(!$ans)
+                        $ans = $this->_xiaodoubi($content);
                     if ($this->webwxsendmsg($ans, $msg['FromUserName'])){
                         $this->_echo( '自动回复: ' . $ans);
                     }else{
@@ -1416,8 +1421,8 @@ class ListenWrite extends Thread {
 $weixin = new WebWeiXin();
 //var_dump($weixin);
 $weixin->loadConfig([
-    //'interactive'=>true,
-    'autoReplyMode'=>true,
+    'interactive'=>true,
+    //'autoReplyMode'=>true,
     //'DEBUG'=>true
 ]);
 if($weixin->start()){
