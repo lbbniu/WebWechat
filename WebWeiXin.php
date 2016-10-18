@@ -1006,6 +1006,16 @@ class WebWeiXin{
                 $this->help();
             }elseif($text == 'me'){
                 $this->_echo($this->User);
+            }elseif($text == 'friend'){
+                $this->_echo($this->ContactList);
+            }elseif($text == 'qun'){
+                $this->_echo($this->GroupList);
+            }elseif($text == 'qunyou'){
+                $this->_echo($this->GroupMemeberList);
+            }elseif($text == 'gzh'){
+                $this->_echo($this->PublicUsersList);
+            }elseif($text == 'tsh'){
+                $this->_echo($this->SpecialUsersList);
             }elseif( substr($text, 0,2) == '->'){
                 list($name, $word) = explode(':',substr($text,2));
                 if ($name == 'all')
@@ -1041,6 +1051,11 @@ e->[昵称或ID]:[文件路径] 给好友发送表情(jpg/gif)
 quit 退出程序
 help 帮助
 me 查看自己的信息
+friend 好友列表
+qun 群列表
+qunyou 群友列表
+gzh 公众号列表
+tsh 特殊号列表
 ==============================================================
 ==============================================================
 ';
