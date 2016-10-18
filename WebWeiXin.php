@@ -1164,13 +1164,13 @@ me 查看自己的信息
 			curl_setopt($oCurl, CURLOPT_SSLVERSION, 1); //CURL_SSLVERSION_TLSv1
 		}
 		$header = [
-			'User-Agent'=>$this->user_agent,
-			'Referer'=>'https://wx.qq.com/'
+			'User-Agent: '.$this->user_agent,
+			'Referer: https://wx.qq.com/'
 		];
 		if($api == 'webwxgetvoice')
-			$header['Range'] = 'bytes=0-';
+			$header[]='Range: bytes=0-';
 		if($api == 'webwxgetvideo')
-			$header['Range'] = 'bytes=0-';
+			$header[]='Range: bytes=0-';
 		curl_setopt($oCurl, CURLOPT_HTTPHEADER, $header);
         if(!empty($params)){
             if(strpos($url,'?')!==false){
@@ -1223,9 +1223,9 @@ me 查看自己的信息
         }elseif($post_file) {
         	if($is_curlFile) {
                 foreach ($param as $key => $val) {
-                    	if (substr($val, 0, 1) == '@') {
-                        	$param[$key] = new \CURLFile(realpath(substr($val,1)));
-                    	}
+                	if (substr($val, 0, 1) == '@') {
+                    	$param[$key] = new \CURLFile(realpath(substr($val,1)));
+                	}
                 }
         	}
 			$strPOST = $param;
@@ -1237,8 +1237,8 @@ me 查看自己的信息
 			$strPOST =  implode("&", $aPOST);
 		}
 		$header = [
-			'Content-Type'=>'application/json; charset=UTF-8',
-			'User-Agent'=>$this->user_agent
+			'Content-Type: application/json; charset=UTF-8',
+			'User-Agent: '.$this->user_agent
 		];
 		curl_setopt($oCurl, CURLOPT_HTTPHEADER, $header);
 		curl_setopt($oCurl, CURLOPT_URL, $url);
