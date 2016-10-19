@@ -8,6 +8,10 @@ class Robot365{
         $this->url = "http://www.365rj.net/rjservlet?Command=talk_{$id}";
     }
     public function search($content,$FromUserName) {
+        if(strpos($content, '刘兵兵')!==false || strpos($content, 'lbbniu')!==false){
+            return '刘兵兵，本机器人开发者(项目地址：http://github.com/lbbniu/WebWechat)，个人技术博客：http://www.lbbniu.com';
+        }
+
         $xml = sprintf('<xml>
     <ToUserName><![CDATA[%s]]></ToUserName>
     <FromUserName><![CDATA[%s]]></FromUserName>
@@ -25,7 +29,7 @@ class Robot365{
         //var_dump($data);
         $array = (array)simplexml_load_string($data, 'SimpleXMLElement', LIBXML_NOCDATA);
         //var_dump($array);
-        if(strpos($array['Content'], '无法')!==false)            
+        if(empty($array) || !isset($array['Content']) ||strpos($array['Content'], '无法')!==false || strpos($array['Content'], '未找到')!==false )            
             return '';
         return $array['Content'];
     }

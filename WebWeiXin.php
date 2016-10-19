@@ -28,6 +28,8 @@ class WebWeiXin{
     private $NoReplyGroup = [
         '优才网全栈工程师',
         'Laravel学院微信群',
+        'PHP和测试',
+        '微明项目特工队',
     ];
 	public function __construct(){ 
 		$this->DEBUG = false;
@@ -355,7 +357,7 @@ class WebWeiXin{
         $params = [
             'BaseRequest'=> $this->BaseRequest,
             'SyncKey'=> $this->SyncKey,
-            'rr'=> ~time()
+            'rr'=> time()
         ];
         $dic = $this->_post($url, $params);
         if ($this->DEBUG)
@@ -637,7 +639,7 @@ class WebWeiXin{
         if ($msg['raw_msg']){
             $srcName = $this->getUserRemarkName($msg['raw_msg']['FromUserName']);
             $dstName = $this->getUserRemarkName($msg['raw_msg']['ToUserName']);
-            $content = str_replace(['&lt;','&gt;'], ['<','>'], $msg['raw_msg']['Content']);
+            $content = $msg['raw_msg']['Content'];//str_replace(['&lt;','&gt;'], ['<','>'], $msg['raw_msg']['Content']);
             $message_id = $msg['raw_msg']['MsgId'];
 
             if (strpos($content, 'http://weixin.qq.com/cgi-bin/redirectforward?args=') !== false){
@@ -662,8 +664,8 @@ class WebWeiXin{
 
             if (substr($msg['raw_msg']['FromUserName'],0,2) == '@@'){
                 # 接收到来自群的消息
-                if (stripos($content, ":<br/>")!==false){
-                    list($people, $content) = explode(':<br/>', $content);
+                if (stripos($content, ':'.PHP_EOL/*":<br/>"*/)!==false){
+                    list($people, $content) = explode(':'.PHP_EOL/*":<br/>"*/, $content);
                     $groupName = $srcName;
                     $srcName = $this->getUserRemarkName($people);
                     $dstName = 'GROUP';
@@ -700,13 +702,16 @@ class WebWeiXin{
             return true;
         }
     }
+    public static function br2nl ( $string ){
+        return preg_replace('/\<br(\s*)?\/?\>/i', PHP_EOL, $string);
+    }
     public function handleMsg($r){
         foreach($r['AddMsgList'] as $msg){
             $this->_echo('[*] 你有新的消息，请注意查收');
 
             $msgType = $msg['MsgType'];
             $name = $this->getUserRemarkName($msg['FromUserName']);
-            $content = str_replace(['&lt;','&gt;'], ['<','>'], $msg['Content']);
+            $content = $msg['Content']= self::br2nl(html_entity_decode($msg['Content']));//str_replace(['&lt;','&gt;'], ['<','>'], $msg['Content']);
             $msgid = $msg['MsgId'];
             if ($this->DEBUG||true){
                 if(!is_dir('msg')){
@@ -719,14 +724,14 @@ class WebWeiXin{
                 $this->_echo( '[*] 该消息已储存到文件: ' . $fn);
                 fclose($f);
             }
-            //var_dump($msgType);
+            
             if ($msgType == 1){
                 $raw_msg = ['raw_msg'=> $msg];
                 $isReply = $this->_showMsg($raw_msg);
                 //lbbniu 重要
                 if ($this->autoReplyMode&&$isReply){
-                    if(substr($msg['FromUserName'],0,2) == '@@' && stripos($content, ":<br/>")!==false){
-                        list($people, $content) = explode(':<br/>', $content);
+                    if(substr($msg['FromUserName'],0,2) == '@@' && stripos($content, ':'.PHP_EOL/*":<br/>"*/)!==false){
+                        list($people, $content) = explode(':'.PHP_EOL/*":<br/>"*/, $content);
                         //continue;
                     }
                     //自己发的消息不自动回复
@@ -822,6 +827,7 @@ class WebWeiXin{
                     'raw_msg'=> $msg, 
                     'message'=> sprintf('[*] 该消息类型为: %d，可能是表情，图片, 链接或红包' , $msg['MsgType'])
                 ];
+                var_dump($msg);
                 $this->_showMsg($raw_msg);
             }
         }
@@ -1257,6 +1263,7 @@ tsh 特殊号列表
         }
         if($jsonfmt){
         	$param = self::json_encode($param);
+            //var_dump($param);
         }
 		if (is_string($param)) {
         	$strPOST = $param;
@@ -1320,8 +1327,7 @@ tsh 特殊号列表
     }
     public function _searchContent($key, $content, $fmat='attr'){
         if($fmat == 'attr'){
-            preg_match('/'.$key . '\s?=\s?"([^"<]+)"/', $content,$pm);
-            if (isset($p[1])){
+            if (preg_match('/'.$key . '\s?=\s?"([^"<]+)"/', $content,$pm)){
                 return $pm[1];
             }
         }elseif($fmat == 'xml'){
