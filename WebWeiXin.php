@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 require_once 'QRcode.class.php';
+require_once 'Robot365.class.php';
 
 function raw_input($str){
    fwrite(STDOUT,$str);
@@ -19,12 +20,15 @@ class WebWeiXin{
             "[#] PassTicket: {$this->pass_ticket}\n" . 
             "[#] DeviceId: {$this->deviceId}\n" . 
             "[#] synckey: {$this->synckey}\n" . 
-            "[#] SyncKey: {json_encode($this->SyncKey)}\n" . 
+            "[#] SyncKey: {self::json_encode($this->SyncKey)}\n" . 
             "[#] syncHost: {$this->syncHost}\n" . 
             "=========================\n";
         return $description;
     }
-
+    private $NoReplyGroup = [
+        '优才网全栈工程师',
+        'Laravel学院微信群',
+    ];
 	public function __construct(){ 
 		$this->DEBUG = false;
         $this->uuid = '';
@@ -423,14 +427,14 @@ class WebWeiXin{
         if ($webwx_data_ticket == '')
             return "None Fuck Cookie";
 
-        $uploadmediarequest = json_encode([
+        $uploadmediarequest = self::json_encode([
             "BaseRequest"=> $this->BaseRequest,
             "ClientMediaId"=> $client_media_id,
             "TotalLen"=> $file_size,
             "StartPos"=> 0,
             "DataLen"=> $file_size,
             "MediaType"=> 4
-        ],JSON_UNESCAPED_UNICODE);
+        ]);
 
         $multipart_encoder = [
             'id'=> 'WU_FILE_' .$this->media_count,
@@ -685,8 +689,15 @@ class WebWeiXin{
         }
         if( !empty($groupName)){
             $this->_echo(sprintf('%s |%s| %s -> %s: %s' , $message_id, trim($groupName), trim($srcName), trim($dstName), str_replace("<br/>", "\n", $content)));
+            //不自动回复的群
+            if(in_array(trim($groupName), $this->NoReplyGroup)){
+                return false;
+            }else{
+                return true;
+            }
         }else{
             $this->_echo(sprintf('%s %s -> %s: %s' , $message_id, trim($srcName), trim($dstName), str_replace("<br/>", "\n", $content)));
+            return true;
         }
     }
     public function handleMsg($r){
@@ -704,30 +715,40 @@ class WebWeiXin{
                 }
                 $fn = 'msg/msg' .$msgid. '.json';
                 $f = fopen($fn, 'w');
-                fwrite($f,json_encode($msg,JSON_UNESCAPED_UNICODE));
+                fwrite($f,self::json_encode($msg));
                 $this->_echo( '[*] 该消息已储存到文件: ' . $fn);
                 fclose($f);
             }
             //var_dump($msgType);
             if ($msgType == 1){
                 $raw_msg = ['raw_msg'=> $msg];
-                $this->_showMsg($raw_msg);
+                $isReply = $this->_showMsg($raw_msg);
                 //lbbniu 重要
-                if ($this->autoReplyMode){
+                if ($this->autoReplyMode&&$isReply){
                     if(substr($msg['FromUserName'],0,2) == '@@' && stripos($content, ":<br/>")!==false){
                         list($people, $content) = explode(':<br/>', $content);
-                        continue;
+                        //continue;
                     }
                     //自己发的消息不自动回复
                     if($msg['FromUserName'] == $this->User['UserName']){
                         $this->_echo('[*] 自己发的消息不自动回复');
                         continue;
                     }
-                    $ans = $this->_weida($content) . "\n[IT全才-LbbNiu]";
-                    if(!$ans)
+
+                    $ans = $this->robo365($content,$msg['FromUserName']);
+                    //问答机器人
+                    if(!$ans){
+                        $ans = $this->_weida($content);
+                    }
+                    //青云客机器人
+                    if(!$ans){
                         $ans = $this->qingyunke($content);
-                    if(!$ans)
+                    }
+                    //小豆比机器人
+                    if(!$ans){
                         $ans = $this->_xiaodoubi($content);
+                    }
+                    $ans .=  "\n[IT全才-LbbNiu]";
                     if ($this->webwxsendmsg($ans, $msg['FromUserName'])){
                         $this->_echo( '自动回复: ' . $ans);
                     }else{
@@ -758,7 +779,7 @@ class WebWeiXin{
                 $this->_echo(sprintf('= 性别: %s' , ['未知', '男', '女'][$info['Sex']]));
                 $this->_echo('=========================');
                 $raw_msg = ['raw_msg'=> $msg, 
-                            'message'=> sprintf('%s 发送了一张名片: %s' , $name, json_encode($info,JSON_UNESCAPED_UNICODE))];
+                            'message'=> sprintf('%s 发送了一张名片: %s' , $name, self::json_encode($info))];
                 $this->_showMsg($raw_msg);
             }elseif ($msgType == 47){
                 $url = $this->_searchContent('cdnurl', $content);
@@ -782,7 +803,7 @@ class WebWeiXin{
                     'appname'=> $this->_searchContent('appname', $content, 'xml')
                 ];
                 $raw_msg = ['raw_msg'=> $msg, 'message'=>sprintf( '%s 分享了一个%s: %s' ,
-                    $name, $appMsgType[$msg['AppMsgType']], json_encode($card,JSON_UNESCAPED_UNICODE))];
+                    $name, $appMsgType[$msg['AppMsgType']], self::json_encode($card))];
                 $this->_showMsg($raw_msg);
             }elseif ($msgType == 51){
                 $raw_msg = ['raw_msg'=> $msg, 'message'=> '[*] 成功获取联系人信息'];
@@ -838,7 +859,6 @@ class WebWeiXin{
                     }    
                 }elseif($selector == '3'){
                     $r = $this->webwxsync();
-                    var_dump($r);
                     if ($r){
                         $this->handleMsg($r);
                     }
@@ -1084,7 +1104,7 @@ tsh 特殊号列表
         return false;
     }
     public function initSave(){
-        file_put_contents("key.key",json_encode([
+        file_put_contents("key.key",self::json_encode([
             'skey'=>$this->skey,
             'sid'=>$this->sid,
             'uin'=>$this->uin,
@@ -1167,6 +1187,10 @@ tsh 特殊号列表
         return $result;
     }
 
+    public static function json_encode($json){
+        return json_encode($json,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+    }
+
 	/**
 	 * GET 请求
 	 * @param string $url
@@ -1231,8 +1255,9 @@ tsh 特殊号列表
             	curl_setopt($oCurl, CURLOPT_SAFE_UPLOAD, false);
         	}
         }
-        if($jsonfmt)
-        	$param = json_encode($param,JSON_UNESCAPED_UNICODE);
+        if($jsonfmt){
+        	$param = self::json_encode($param);
+        }
 		if (is_string($param)) {
         	$strPOST = $param;
         }elseif($post_file) {
@@ -1317,6 +1342,10 @@ tsh 特殊号列表
         }else{
             return '你在说什么，风太大听不清列';
         }
+    }
+    public function robo365($word,$ToUserName){
+        $robo365 = new Robot365(6);
+        return $robo365->search($word,$ToUserName);
     }
     /**
      * 问答机器人
@@ -1440,6 +1469,8 @@ $weixin->loadConfig([
     //'autoReplyMode'=>true,
     //'DEBUG'=>true
 ]);
+//var_dump($weixin->robo365("不错",'1222'));
+//exit();
 if($weixin->start()){
     $msg  = new ListenMsg($weixin);
     $write = new ListenWrite($weixin);
