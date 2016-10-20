@@ -20,7 +20,7 @@ class WebWeiXin{
             "[#] PassTicket: {$this->pass_ticket}\n" . 
             "[#] DeviceId: {$this->deviceId}\n" . 
             "[#] synckey: {$this->synckey}\n" . 
-            "[#] SyncKey: {self::json_encode($this->SyncKey)}\n" . 
+            "[#] SyncKey: ".self::json_encode($this->SyncKey)."\n" . 
             "[#] syncHost: {$this->syncHost}\n" . 
             "=========================\n";
         return $description;
@@ -753,6 +753,9 @@ class WebWeiXin{
                     if(!$ans){
                         $ans = $this->_xiaodoubi($content);
                     }
+                    if(!$ans){
+                        $ans = $content;
+                    }
                     $ans .=  "\n[IT全才-LbbNiu]";
                     if ($this->webwxsendmsg($ans, $msg['FromUserName'])){
                         $this->_echo( '自动回复: ' . $ans);
@@ -1033,15 +1036,30 @@ class WebWeiXin{
             }elseif($text == 'me'){
                 $this->_echo($this->User);
             }elseif($text == 'friend'){
-                $this->_echo($this->ContactList);
+                foreach ($this->ContactList as $key => $value) {
+                    # code...
+                    $this->_echo("NickName:{$value['NickName']}----Alias:{$value['Alias']}----UserName:{$value['UserName']}");
+                }
             }elseif($text == 'qun'){
-                $this->_echo($this->GroupList);
+                foreach ($this->GroupList as $key => $value) {
+                    # code...
+                    $this->_echo("NickName:{$value['NickName']}----MemberCount:{$value['UserName']}----UserName:{$value['UserName']}");
+                }
             }elseif($text == 'qunyou'){
-                $this->_echo($this->GroupMemeberList);
+                foreach ($this->GroupMemeberList as $key => $value) {
+                    # code...
+                    $this->_echo("NickName:{$value['NickName']}----UserName:{$value['UserName']}");
+                }
             }elseif($text == 'gzh'){
-                $this->_echo($this->PublicUsersList);
+                foreach ($this->PublicUsersList as $key => $value) {
+                    # code...
+                    $this->_echo("NickName:{$value['NickName']}----Alias:{$value['Alias']}----UserName:{$value['UserName']}");
+                }
             }elseif($text == 'tsh'){
-                $this->_echo($this->SpecialUsersList);
+                foreach ($this->SpecialUsersList as $key => $value) {
+                    # code...
+                    $this->_echo("NickName:{$value['NickName']}----UserName:{$value['UserName']}");
+                }
             }elseif( substr($text, 0,2) == '->'){
                 list($name, $word) = explode(':',substr($text,2));
                 if ($name == 'all')
