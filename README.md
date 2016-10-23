@@ -82,8 +82,7 @@
 	"VerifyUserListSize": 1,
 	"VerifyUserList": [
 		{
-		"Value": "@2cbb226c459cc5203aa991942f41e19820f5ef3ccceb2dece598412f36406d1f", #群中的好友id
-		"VerifyUserTicket": ""
+		"Value": "@2cbb226c459cc5203aa991942f41e19820f5ef3ccceb2dece598412f36406d1f",		"VerifyUserTicket": ""
 		}
 	],
 	"VerifyContent": "我是lbbniu.cn",
@@ -116,7 +115,7 @@
 	],
 	"skey": "@crypt_d9da2d81_f3a62e80c16e61ad660dffd14e0ef72c"
 }```####返回数据（post）：```json
-{	"BaseResponse": {		"Ret": 0,		"ErrMsg": ""	}}
+{	"BaseResponse":{		"Ret":	0,		"ErrMsg":""	}}
 ```
 ###2.好友验证消息体
 ```
@@ -257,7 +256,7 @@ ChatRoomName 群组id
 			"DisplayName": "",
 			"KeyWord": ""
 		}
-		......
+		...
 	]
 }
 ```
@@ -292,7 +291,7 @@ ChatRoomName 群组id
 	"MemberList": []
 }
 ```
-###6.置顶聊天会话
+###7.置顶聊天会话
 https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxoplog
 ####请求头
 Content-Type:application/json;charset=UTF-8
@@ -319,7 +318,7 @@ Content-Type:application/json;charset=UTF-8
 	}
 }
 ```
-###7.取消置顶聊天会话
+###8.取消置顶聊天会话
 https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxoplog
 ####请求头
 Content-Type:application/json;charset=UTF-8
@@ -346,7 +345,7 @@ Content-Type:application/json;charset=UTF-8
 	}
 }
 ```
-###8.给好友添加备注
+###9.给好友添加备注
 https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxoplog
 ####请求头
 Content-Type:application/json;charset=UTF-8
