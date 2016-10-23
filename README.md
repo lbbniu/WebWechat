@@ -78,7 +78,7 @@
 		"Skey": "@crypt_d9da2d81_f3a62e80c16e61ad660dffd14e0ef72c",
 		"DeviceID": "e799452821014375"
 	},
-	"Opcode": 2,固定
+	"Opcode": 2,
 	"VerifyUserListSize": 1,
 	"VerifyUserList": [
 		{
@@ -86,7 +86,7 @@
 		"VerifyUserTicket": ""
 		}
 	],
-	"VerifyContent": "我是lbbniu.cn",#验证消息
+	"VerifyContent": "我是lbbniu.cn",
 	"SceneListCount": 1,
 	"SceneList": [
 		33
@@ -101,18 +101,18 @@
 		"Skey": "@crypt_d9da2d81_f3a62e80c16e61ad660dffd14e0ef72c",
 		"DeviceID": "e606224692711308"
 	},
-	"Opcode": 3,固定
+	"Opcode": 3,
 	"VerifyUserListSize": 1,
 	"VerifyUserList": [
 	{
-		"Value": "@2cbb226c459cc5203aa991942f41e19820f5ef3ccceb2dece598412f36406d1f",对方UserName,验证消息得到
-		"VerifyUserTicket": "v2_9d2e1b01ee6de582a237f6369a6746c84d3a072b48bf36f152c5c947505e871189cafa09748e05bab27caf812a8f3a12d51da3dceda3cab5f52a406ec124a4a9@stranger" 验证消息中得到
+		"Value": "@2cbb226c459cc5203aa991942f41e19820f5ef3ccceb2dece598412f36406d1f",
+		"VerifyUserTicket": "v2_9d2e1b01ee6de582a237f6369a6746c84d3a072b48bf36f152c5c947505e871189cafa09748e05bab27caf812a8f3a12d51da3dceda3cab5f52a406ec124a4a9@stranger" 
 	}
 	],
 	"VerifyContent": "",
 	"SceneListCount": 1,
 	"SceneList": [
-		33 固定
+		33
 	],
 	"skey": "@crypt_d9da2d81_f3a62e80c16e61ad660dffd14e0ef72c"
 }```####返回数据（post）：```json
