@@ -128,9 +128,9 @@
 	"UserName": "@2cbb226c459cc5203aa991942f41e19820f5ef3ccceb2dece598412f36406d1f",
 	"NickName": "LbbNiu",
 	"QQNum": 0,
-	"Province": "åŒ—äº¬",
-	"City": "æœé˜³",
-	"Content": "æˆ‘æ˜¯ç¾¤èŠ\"PHPå’Œæµ‹è¯•\"çš„LbbNiu",
+	"Province": "",
+	"City": "æ",
+	"Content": "",
 	"Signature": "",
 	"Alias": "lbbniu",
 	"Scene": 14,
@@ -145,7 +145,7 @@
 	"MemberCount": 3,
 	"MemberList": [
 		{
-		"UserName": "@fe20084fb8e3b488f49d3df2bf3ec2837daeb468abfe62a48ef39a6e407cab0e"
+			"UserName": "@fe20084fb8e3b488f49d3df2bf3ec2837daeb468abfe62a48ef39a6e407cab0e"
 		},
 		....
 	],
@@ -161,8 +161,8 @@ UserName 初始化接口中获取
 ```####返回数据（json）：```
 {
 	"BaseResponse": {
-	"Ret": 0,
-	"ErrMsg": "Everything is OK"
+		"Ret": 0,
+		"ErrMsg": "Everything is OK"
 	},
 	"Topic": "",
 	"PYInitial": "",
