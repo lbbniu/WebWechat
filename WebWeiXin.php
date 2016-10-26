@@ -498,6 +498,29 @@ class WebWeiXin{
         return $dic['BaseResponse']['Ret'] == 0;
     }
 
+    /**
+     * 添加好友，或者通过好友验证消息
+     * @Opcode 2 添加 3 通过
+     */
+    public function webwxverifyuser($user,$Opcode){
+        $url = sprintf($this->base_uri.'/webwxverifyuser?lang=zh_CN&r=%s&pass_ticket=%s' ,time()*1000, $this->pass_ticket);
+
+        $data = [
+            "BaseRequest"=> $this->BaseRequest,
+            "Opcode"=>3,
+            "VerifyUserListSize"=>1,
+            "VerifyUserList"=>[$user],
+            "VerifyContent"=>"",
+            "SceneListCount"=>1,
+            "SceneList"=>[33],
+            "skey"=>$this->skey
+        ];
+        $dic = $this->_post($url, $data);
+        if ($this->DEBUG)
+           var_dump($dic);
+        return $dic['BaseResponse']['Ret'] == 0;
+    }
+
     public function _saveFile($filename, $data, $api=null){
         $fn = $filename;
         if (isset($this->saveSubFolders[$api])){
@@ -777,6 +800,23 @@ class WebWeiXin{
                            'message'=>sprintf('%s 发了一段语音: %s' , $name, $voice)];
                 $this->_showMsg($raw_msg);
                 $this->_safe_open($voice);
+            }elseif($msgType == 37){
+                //是否自动通过加好友验证
+                if(true){
+                    $data = [
+                        "Value" => $msg['RecommendInfo']['UserName'],
+                        "VerifyUserTicket" => $msg['RecommendInfo']['Ticket']
+                    ];
+                    if($this->webwxverifyuser($data,3)){
+                         $raw_msg = ['raw_msg'=> $msg,
+                           'message'=>sprintf('添加 %s 好友成功' , $msg['RecommendInfo']['NickName'])];
+                    }else{
+                         $raw_msg = ['raw_msg'=> $msg,
+                           'message'=>sprintf('添加 %s 好友失败' , $msg['RecommendInfo']['NickName'])];          
+                    }
+                   
+                    $this->_showMsg($raw_msg);
+                }
             }elseif ($msgType == 42){
                 $info = $msg['RecommendInfo'];
                 $this->_echo(sprintf('%s 发送了一张名片:' , $name));
