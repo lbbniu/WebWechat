@@ -392,7 +392,7 @@ class WebWeiXin{
         return $dic['BaseResponse']['Ret'] == 0;
     }
 
-    public function webwxuploadmedia($image_name){
+    public function webwxuploadmedia($ToUserName,$image_name){
         $url = 'https://file.wx.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia?f=json';
         # 计数器
         $this->media_count = $this->media_count + 1;
@@ -403,9 +403,10 @@ class WebWeiXin{
         $mime_type = mime_content_type($image_name);
         # 微信识别的文档格式，微信服务器应该只支持两种类型的格式。pic和doc
         # pic格式，直接显示。doc格式则显示为文件。
-        $media_type =  explode('/', $mime_type)== 'image'?'pic':'doc';
+        $media_type =  explode('/', $mime_type)[0]== 'image'?'pic':'doc';
+        $fTime = filemtime($image_name);
         # 上一次修改日期
-        $lastModifieDate = 'Thu Mar 17 2016 00:55:10 GMT+0800 (CST)';
+        $lastModifieDate = gmdate('D M d Y H:i:s TO',$fTime ).' (CST)';//'Thu Mar 17 2016 00:55:10 GMT+0800 (CST)';
         # 文件大小
         $file_size = filesize($file_name);
         # PassTicket
@@ -435,7 +436,11 @@ class WebWeiXin{
             "TotalLen"=> $file_size,
             "StartPos"=> 0,
             "DataLen"=> $file_size,
-            "MediaType"=> 4
+            "MediaType"=> 4,
+            "UploadType"=>2,
+            "FromUserName"=>$this->User["UserName"],
+            "ToUserName"=>$ToUserName,
+            "FileMd5"=>md5_file($image_name)
         ]);
 
         $multipart_encoder = [
@@ -981,21 +986,27 @@ class WebWeiXin{
         }
     }
     public function sendImg($name, $file_name){
-        $response = $this->webwxuploadmedia($file_name);
+        $user_id = $this->getUSerID($name);
+        $response = $this->webwxuploadmedia($user_id ,$file_name);
         $media_id = "";
         if (!empty($response)){
             $media_id = $response['MediaId'];
+        }else{
+            $this->_echo("{$name}->{$file_name} 发送失败");
+            return;
         }
-        $user_id = $this->getUSerID($name);
         $response = $this->webwxsendmsgimg($user_id, $media_id);
     }
     public function sendEmotion($name, $file_name){
-        $response = $this->webwxuploadmedia($file_name);
+        $user_id = $this->getUSerID($name);
+        $response = $this->webwxuploadmedia($user_id,$file_name);
         $media_id = "";
         if (!empty($response)){
             $media_id = $response['MediaId'];
+        }else{
+            $this->_echo("{$name}->{$file_name} 发送失败");
+            return;
         }
-        $user_id = $this->getUSerID($name);
         $response = $this->webwxsendmsgemotion($user_id, $media_id);
     }
 	//开始登录
@@ -1319,8 +1330,12 @@ tsh 特殊号列表
             	curl_setopt($oCurl, CURLOPT_SAFE_UPLOAD, false);
         	}
         }
+        $header = [
+            'User-Agent: '.$this->user_agent
+        ];
         if($jsonfmt){
         	$param = self::json_encode($param);
+            $header[] = 'Content-Type: application/json; charset=UTF-8';
             //var_dump($param);
         }
 		if (is_string($param)) {
@@ -1341,10 +1356,7 @@ tsh 特殊号列表
 			}
 			$strPOST =  implode("&", $aPOST);
 		}
-		$header = [
-			'Content-Type: application/json; charset=UTF-8',
-			'User-Agent: '.$this->user_agent
-		];
+		
 		curl_setopt($oCurl, CURLOPT_HTTPHEADER, $header);
 		curl_setopt($oCurl, CURLOPT_URL, $url);
 		curl_setopt($oCurl, CURLOPT_RETURNTRANSFER, 1 );
