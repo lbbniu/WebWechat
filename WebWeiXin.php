@@ -996,6 +996,11 @@ class WebWeiXin{
             return;
         }
         $response = $this->webwxsendmsgimg($user_id, $media_id);
+        if($response){
+            $this->_echo("{$name}->{$file_name} 发送成功");
+        }else{
+            $this->_echo("{$name}->{$file_name} 发送失败");
+        }
     }
     public function sendEmotion($name, $file_name){
         $user_id = $this->getUSerID($name);
