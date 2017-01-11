@@ -768,11 +768,11 @@ class WebWeiXin{
                         continue;
                     }
 
-                    $ans = $this->robo365($content,$msg['FromUserName']);
-                    //问答机器人
+                    /*$ans = $this->robo365($content,$msg['FromUserName']);
+                    //365机器人
                     if(!$ans){
                         $ans = $this->_weida($content);
-                    }
+                    }*/
                     //青云客机器人
                     if(!$ans){
                         $ans = $this->qingyunke($content);
